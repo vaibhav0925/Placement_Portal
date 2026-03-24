@@ -140,7 +140,7 @@ def student_dashboard(current_user):
 @app.route('/company_register', methods=['GET', 'POST'])
 def company_register():
     if request.method == 'POST':
-        name = request.form['name']
+        name = request.form['company_name']
         website = request.form['website']
         hr = request.form['hr']
         email = request.form['email']
