@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Drive</title>
+</head>
+<body>
+    <div class="container-fluid p-4 bg-light">
+    <h3>All Placement Drives</h3>
+    <div class="card shadow-sm border-0 p-4">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Job Title</th>
+                    <th>Salary</th>
+                    <th>Status</th>
+                    <th>Applications</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for drive in drives %}
+                <tr>
+                    <td>{{ drive.company.company_name }}</td>
+                    <td>{{ drive.job_title }}</td>
+                    <td>₹{{ drive.salary_package }} LPA</td>
+                    <td>
+                        <span class="badge 
+                            {% if drive.status == 'Approved' %}bg-success
+                            {% elif drive.status == 'Pending' %}bg-warning
+                            {% else %}bg-secondary{% endif %}">
+                            {{ drive.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-dark">{{ drive.applications|length }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

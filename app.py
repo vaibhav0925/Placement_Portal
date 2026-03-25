@@ -122,6 +122,11 @@ def student_login():
         if user and check_password_hash(user.password_hash, password):
             return create_jwt_response(user, '/student_dashboard')
         return "Invalid Student Credentials"
+
+        if user.role == "student":
+            profile = StudentProfile.query.filter_by(user_id=user.user_id).first()
+        if profile.is_blacklisted:
+            return "Your account has been blacklisted. Contact Admin on email iitm_admin@portal.com."
     return render_template("student_login.html")
 
 
@@ -215,8 +220,159 @@ def admin_dashboard(current_user):
         'total_apps': Application.query.count()
     }
     pending_companies = CompanyProfile.query.filter_by(approval_status="Pending").all()
+
+    pending_drives = PlacementDrive.query.filter_by(status="Pending").all()
     
     return render_template("admin_dashboard.html", admin=current_user, stats=stats, pending_companies=pending_companies)
+
+
+@app.route('/admin/approve_company/<int:id>')
+@token_required
+def approve_company(current_user, id):
+    if current_user.role != 'admin': return redirect('/')
+    company = CompanyProfile.query.get_or_404(id)
+    company.approval_status = "Approved"
+    db.session.commit()
+    return redirect('/admin_dashboard')
+
+@app.route('/admin/approve_drive/<int:id>')
+@token_required
+def approve_drive(current_user, id):
+    if current_user.role != 'admin': return redirect('/')
+    drive = PlacementDrive.query.get_or_404(id)
+    drive.status = "Approved"
+    db.session.commit()
+    return redirect('/admin_dashboard')
+
+# --- BLACKLISTING ---
+
+@app.route('/admin/blacklist_student/<int:id>')
+@token_required
+def blacklist_student(current_user, id):
+    if current_user.role != 'admin': return redirect('/')
+    student = StudentProfile.query.get_or_404(id)
+    student.is_blacklisted = not student.is_blacklisted  # Toggles blacklist
+    db.session.commit()
+    return redirect('/admin_dashboard')
+
+# --- SEARCH & VIEW ALL ---
+
+@app.route('/admin/manage_students')
+@token_required
+def manage_students(current_user):
+    if current_user.role != 'admin': return redirect('/')
+    search_query = request.args.get('search', '')
+    
+    # Search by Name (via User join), Email, or Roll Number
+    students = StudentProfile.query.join(User).filter(
+        (User.name.ilike(f'%{search_query}%')) | 
+        (User.email.ilike(f'%{search_query}%')) |
+        (StudentProfile.roll_number.ilike(f'%{search_query}%'))
+    ).all()
+    
+    return render_template("admin_students.html", students=students)
+
+@app.route('/admin/reject_company/<int:id>')
+@token_required
+def reject_company(current_user, id):
+    if current_user.role != 'admin': return redirect('/')
+    company = CompanyProfile.query.get_or_404(id)
+    company.approval_status = "Rejected"
+    db.session.commit()
+    return redirect('/admin_dashboard')
+
+@app.route('/admin/blacklist_company/<int:id>')
+@token_required
+def blacklist_company(current_user, id):
+    if current_user.role != 'admin': return redirect('/')
+    company = CompanyProfile.query.get_or_404(id)
+    company.is_blacklisted = not company.is_blacklisted # Toggle
+    db.session.commit()
+    return redirect('/admin/manage_companies')
+
+"""
+@app.route('/admin/all_applications')
+@token_required
+def view_all_applications(current_user):
+    if current_user.role != 'admin': return redirect('/')
+    apps = Application.query.all()
+    return render_template("admin_applications.html", applications=apps)
+"""
+
+@app.route('/admin/reject_drive/<int:id>')
+@token_required
+def reject_drive(current_user, id):
+    if current_user.role != 'admin': 
+        return redirect('/')
+    
+    drive = PlacementDrive.query.get_or_404(id)
+    drive.status = "Rejected"
+    db.session.commit()
+
+    return redirect('/admin/manage_drives')
+
+
+@app.route('/admin/manage_companies')
+@token_required
+def manage_companies(current_user):
+    if current_user.role != 'admin': return redirect('/')
+    
+    search_query = request.args.get('search', '')
+    # Fetch companies filtered by name or email if search is provided
+    companies = CompanyProfile.query.filter(
+        (CompanyProfile.company_name.ilike(f'%{search_query}%')) |
+        (CompanyProfile.contact_email.ilike(f'%{search_query}%'))
+    ).all()
+    
+    return render_template("admin_companies.html", companies=companies)
+
+@app.route('/admin/manage_drives')
+@token_required
+def manage_drives(current_user):
+    if current_user.role != 'admin': return redirect('/')
+    
+    search_query = request.args.get('search', '')
+    # Fetch drives filtered by company name or job role
+    drives = PlacementDrive.query.join(CompanyProfile).filter(
+        (PlacementDrive.job_role.ilike(f'%{search_query}%')) |
+        (CompanyProfile.company_name.ilike(f'%{search_query}%'))
+    ).all()
+    
+    return render_template("admin_drives.html", drives=drives)
+
+
+
+@app.route('/admin/global_search')
+@token_required
+def global_search(current_user):
+    if current_user.role != 'admin': return redirect('/')
+    
+    query = request.args.get('q', '').strip()
+    
+    if not query:
+        return redirect('/admin_dashboard')
+
+    # Search Students (Name, Email, or Roll No)
+    students = StudentProfile.query.join(User).filter(
+        (User.name.ilike(f'%{query}%')) | 
+        (User.email.ilike(f'%{query}%')) |
+        (StudentProfile.roll_number.ilike(f'%{query}%'))
+    ).all()
+
+    # Search Companies (Name)
+    companies = CompanyProfile.query.filter(
+        CompanyProfile.company_name.ilike(f'%{query}%')
+    ).all()
+
+    return render_template("admin_search_results.html", 
+                           query=query, 
+                           students=students, 
+                           companies=companies)
+
+
+@app.route('/contact')
+def contact():
+    return render_template("contact.html")
 
 
 @app.route('/logout')

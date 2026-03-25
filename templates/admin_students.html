@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
+    <title>Manage Students</title>
+</head>
+<body class="bg-light">
+    <div class="d-flex">
+        <!-- Sidebar (Same as Dashboard) -->
+        <div class="bg-white border-end" style="width: 250px; min-height: 100vh;">
+            <div class="p-4 fs-4 fw-bold" style="color: #6b0000;">Admin Portal</div>
+            <div class="list-group list-group-flush">
+                <a href="/admin_dashboard" class="list-group-item list-group-item-action p-3">Dashboard</a>
+                <a href="/admin/manage_students" class="list-group-item list-group-item-action p-3 active" style="background-color: #6b0000; border: none;">Manage Students</a>
+                <a href="/admin/all_applications" class="list-group-item list-group-item-action p-3">All Applications</a>
+                <a href="/logout" class="list-group-item list-group-item-action p-3 text-danger">Logout</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container-fluid p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Student Directory</h3>
+                <!-- Search Form -->
+                <form action="/admin/manage_students" method="GET" class="d-flex w-50">
+                    <input type="text" name="search" class="form-control me-2" placeholder="Search by Name, Email or Roll No..." value="{{ request.args.get('search', '') }}">
+                    <button type="submit" class="btn btn-dark">Search</button>
+                </form>
+            </div>
+
+            <div class="card shadow-sm border-0 p-4">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Roll No</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.roll_number }}</td>
+                            <td>{{ student.user.name }}</td>
+                            <td>{{ student.user.email }}</td>
+                            <td>
+                                {% if student.is_blacklisted %}
+                                <span class="badge bg-danger">Blacklisted</span>
+                                {% else %}
+                                <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="/admin/blacklist_student/{{ student.student_id }}" 
+                                   class="btn btn-sm {{ 'btn-outline-success' if student.is_blacklisted else 'btn-outline-danger' }}">
+                                    {{ 'Unblock' if student.is_blacklisted else 'Blacklist' }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

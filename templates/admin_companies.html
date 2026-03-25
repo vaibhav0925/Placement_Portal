@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Companies</title>
+</head>
+<body>
+    <div class="container-fluid p-4 bg-light">
+    <h3>All Registered Companies</h3>
+    <div class="card shadow-sm border-0 p-4">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in companies %}
+                <tr>
+                    <td>{{ company.company_name }}</td>
+                    <td>{{ company.user.email }}</td>
+                    <td>
+                        <span class="badge {{ 'bg-danger' if company.is_blacklisted else 'bg-success' }}">
+                            {{ 'Blacklisted' if company.is_blacklisted else 'Active' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="/admin/blacklist_company/{{ company.company_id }}" 
+                           class="btn btn-sm {{ 'btn-outline-success' if company.is_blacklisted else 'btn-outline-danger' }}">
+                            {{ 'Unblock' if company.is_blacklisted else 'Blacklist' }}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
