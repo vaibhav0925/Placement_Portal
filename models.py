@@ -95,6 +95,8 @@ class PlacementDrive(db.Model):
         nullable=False
     )
 
+    #company = db.relationship('CompanyProfile', backref=db.backref('drives', lazy=True))
+
     job_title = db.Column(db.String(200), nullable=False)
     job_description = db.Column(db.Text)
 

@@ -3,42 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Companies</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Manage Companies</title>
 </head>
-<body>
-    <div class="container-fluid p-4 bg-light">
-    <h3>All Registered Companies</h3>
-    <div class="card shadow-sm border-0 p-4">
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>Company Name</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for company in companies %}
-                <tr>
-                    <td>{{ company.company_name }}</td>
-                    <td>{{ company.user.email }}</td>
-                    <td>
-                        <span class="badge {{ 'bg-danger' if company.is_blacklisted else 'bg-success' }}">
-                            {{ 'Blacklisted' if company.is_blacklisted else 'Active' }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="/admin/blacklist_company/{{ company.company_id }}" 
-                           class="btn btn-sm {{ 'btn-outline-success' if company.is_blacklisted else 'btn-outline-danger' }}">
-                            {{ 'Unblock' if company.is_blacklisted else 'Blacklist' }}
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<body class="bg-light">
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="bg-white border-end" style="width: 250px; min-height: 100vh;">
+            <div class="p-4 fs-4 fw-bold" style="color: #6b0000;">Admin Portal</div>
+            <div class="list-group list-group-flush">
+                <a href="/admin_dashboard" class="list-group-item list-group-item-action p-3">Dashboard</a>
+                <a href="/admin/manage_students" class="list-group-item list-group-item-action p-3">Manage Students</a>
+                <a href="/admin/manage_companies" class="list-group-item list-group-item-action p-3 active" style="background-color: #6b0000; border: none;">Manage Companies</a>
+                <!--<a href="/admin/all_applications" class="list-group-item list-group-item-action p-3">All Applications</a>-->
+                <a href="/logout" class="list-group-item list-group-item-action p-3 text-danger">Logout</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container-fluid p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>All Registered Companies</h3>
+                <!-- Search Form -->
+                <form action="/admin/manage_companies" method="GET" class="d-flex w-50">
+                    <input type="text" name="search" class="form-control me-2" placeholder="Search by Company Name or Email..." value="{{ request.args.get('search', '') }}">
+                    <button type="submit" class="btn btn-dark">Search</button>
+                </form>
+            </div>
+
+            <div class="card shadow-sm border-0 p-4">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Official Email</th>
+                            <th>HR Contact</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in companies %}
+                        <tr>
+                            <td class="fw-bold">{{ company.company_name }}</td>
+                            <td>{{ company.user.email }}</td>
+                            <td>{{ company.hr_contact or 'N/A' }}</td>
+                            <td>
+                                {% if company.is_blacklisted %}
+                                <span class="badge bg-danger">Blacklisted</span>
+                                {% else %}
+                                <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="/admin/blacklist_company/{{ company.company_id }}" 
+                                   class="btn btn-sm {{ 'btn-outline-success' if company.is_blacklisted else 'btn-outline-danger' }}">
+                                    {{ 'Unblock' if company.is_blacklisted else 'Blacklist' }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">No companies found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-</div>
 </body>
 </html>

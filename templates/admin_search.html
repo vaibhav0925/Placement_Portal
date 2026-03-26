@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Search Results: {{ query }}</title>
+</head>
+<body class="bg-light">
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="bg-white border-end" style="width: 250px; min-height: 100vh;">
+            <div class="p-4 fs-4 fw-bold" style="color: #6b0000;">Admin Portal</div>
+            <div class="list-group list-group-flush">
+                <a href="/admin_dashboard" class="list-group-item list-group-item-action p-3">Dashboard</a>
+                <a href="/admin/manage_students" class="list-group-item list-group-item-action p-3">Manage Students</a>
+                <a href="/admin/manage_companies" class="list-group-item list-group-item-action p-3">Manage Companies</a>
+                <a href="/logout" class="list-group-item list-group-item-action p-3 text-danger">Logout</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container-fluid p-4">
+            <div class="mb-4">
+                <h3>Search Results for: <span class="text-muted">"{{ query }}"</span></h3>
+                <a href="/admin_dashboard" class="btn btn-sm btn-outline-secondary">← Back to Dashboard</a>
+            </div>
+
+            <!-- Students Section -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white fw-bold py-3">Students Found ({{ students|length }})</div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Roll No</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ student.roll_number }}</td>
+                                <td>{{ student.user.name }}</td>
+                                <td>{{ student.user.email }}</td>
+                                <td><a href="/admin/manage_students?search={{ student.roll_number }}" class="btn btn-sm btn-link">View</a></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center py-3 text-muted">No students matched your search.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Companies Section -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold py-3">Companies Found ({{ companies|length }})</div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Website</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for company in companies %}
+                            <tr>
+                                <td>{{ company.company_name }}</td>
+                                <td>{{ company.website or 'N/A' }}</td>
+                                <td><a href="/admin/manage_companies?search={{ company.company_name }}" class="btn btn-sm btn-link">View</a></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center py-3 text-muted">No companies matched your search.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

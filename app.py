@@ -30,6 +30,7 @@ def token_required(f):
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
             current_user = User.query.get(data['user_id'])
         except: return redirect('/')
+        expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         return f(current_user, *args, **kwargs)
     return decorated
 
@@ -83,12 +84,14 @@ def home():
 
 @app.route('/student_register', methods=['GET', 'POST'])
 def student_register():
-
     if request.method == 'POST':
-
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return "Email already registered. Please log in."
 
         user = User(
             name=name,
@@ -96,16 +99,19 @@ def student_register():
             password_hash=generate_password_hash(password),
             role="student"
         )
-
         db.session.add(user)
-        db.session.commit()
+        db.session.commit() # Save user to get user.user_id
+
+        student_count = StudentProfile.query.count()
+        new_roll = f"IITM-{str(student_count + 1).zfill(3)}"
 
         student = StudentProfile(
-            user_id=user.user_id
+            user_id=user.user_id,
+            roll_number=new_roll
         )
 
         db.session.add(student)
-        db.session.commit()
+        db.session.commit() # Final save
 
         return redirect('/student_login')
 
@@ -191,7 +197,51 @@ def company_login():
 @token_required
 def company_dashboard(current_user):
     if current_user.role != 'company': return redirect('/')
-    return render_template("company_dashboard.html", company=current_user)
+
+    drives = PlacementDrive.query.filter_by(company_id=current_user.company_profile.company_id).all()
+
+    return render_template("company_dashboard.html", company=current_user, drives=drives)
+
+
+
+@app.route('/create_drive', methods=['GET', 'POST'])
+@token_required
+def create_drive(current_user):
+    if current_user.role != 'company': return redirect('/')
+
+    if request.method == 'POST':
+        # 1. Collect form data
+        job_title = request.form.get('job_title')
+        salary = request.form.get('salary')
+        location = request.form.get('location')
+        deadline_str = request.form.get('deadline')
+        drive_date_str = request.form.get('drive_date')
+        eligibility = request.form.get('eligibility')
+        description = request.form.get('description')
+
+        # 2. Convert date strings to Python date objects
+        deadline = datetime.datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None
+        drive_date = datetime.datetime.strptime(drive_date_str, '%Y-%m-%d').date() if drive_date_str else None
+
+        # 3. Create and Save to DB
+        new_drive = PlacementDrive(
+            company_id=current_user.company_profile.company_id,
+            job_title=job_title,
+            job_description=description,
+            eligibility_criteria=eligibility,
+            location=location,
+            salary_package=float(salary) if salary else 0.0,
+            application_deadline=deadline,
+            drive_date=drive_date,
+            status="Pending"  # This ensures it hits the Admin's "Pending" table
+        )
+
+        db.session.add(new_drive)
+        db.session.commit()
+
+        return redirect('/company_dashboard')
+
+    return render_template("create_drive.html")
 
 
 @app.route('/admin_login', methods=['GET', 'POST'])
@@ -212,7 +262,7 @@ def admin_login():
 def admin_dashboard(current_user):
     if current_user.role != 'admin': return redirect('/')
     
-    # Fetch real data for your dashboard cards
+    
     stats = {
         'total_students': StudentProfile.query.count(),
         'total_companies': CompanyProfile.query.count(),
@@ -223,7 +273,7 @@ def admin_dashboard(current_user):
 
     pending_drives = PlacementDrive.query.filter_by(status="Pending").all()
     
-    return render_template("admin_dashboard.html", admin=current_user, stats=stats, pending_companies=pending_companies)
+    return render_template("admin_dashboard.html", admin=current_user, stats=stats, pending_companies=pending_companies, pending_drives=pending_drives)
 
 
 @app.route('/admin/approve_company/<int:id>')
@@ -255,7 +305,6 @@ def blacklist_student(current_user, id):
     db.session.commit()
     return redirect('/admin_dashboard')
 
-# --- SEARCH & VIEW ALL ---
 
 @app.route('/admin/manage_students')
 @token_required
@@ -264,7 +313,7 @@ def manage_students(current_user):
     search_query = request.args.get('search', '')
     
     # Search by Name (via User join), Email, or Roll Number
-    students = StudentProfile.query.join(User).filter(
+    students = db.session.query(StudentProfile).join(User).filter(
         (User.name.ilike(f'%{search_query}%')) | 
         (User.email.ilike(f'%{search_query}%')) |
         (StudentProfile.roll_number.ilike(f'%{search_query}%'))
@@ -290,14 +339,6 @@ def blacklist_company(current_user, id):
     db.session.commit()
     return redirect('/admin/manage_companies')
 
-"""
-@app.route('/admin/all_applications')
-@token_required
-def view_all_applications(current_user):
-    if current_user.role != 'admin': return redirect('/')
-    apps = Application.query.all()
-    return render_template("admin_applications.html", applications=apps)
-"""
 
 @app.route('/admin/reject_drive/<int:id>')
 @token_required
@@ -318,12 +359,17 @@ def manage_companies(current_user):
     if current_user.role != 'admin': return redirect('/')
     
     search_query = request.args.get('search', '')
+
+    query = CompanyProfile.query.join(User)
     # Fetch companies filtered by name or email if search is provided
-    companies = CompanyProfile.query.filter(
-        (CompanyProfile.company_name.ilike(f'%{search_query}%')) |
-        (CompanyProfile.contact_email.ilike(f'%{search_query}%'))
-    ).all()
+    if search_query:
+        query = query.filter(
+            (CompanyProfile.company_name.ilike(f'%{search_query}%')) |
+            (User.email.ilike(f'%{search_query}%')) |
+            (CompanyProfile.hr_contact.ilike(f'%{search_query}%'))
+        )
     
+    companies = query.all()
     return render_template("admin_companies.html", companies=companies)
 
 @app.route('/admin/manage_drives')
@@ -332,9 +378,9 @@ def manage_drives(current_user):
     if current_user.role != 'admin': return redirect('/')
     
     search_query = request.args.get('search', '')
-    # Fetch drives filtered by company name or job role
+    # Fetch drives filtered by company name or job title if search is provided
     drives = PlacementDrive.query.join(CompanyProfile).filter(
-        (PlacementDrive.job_role.ilike(f'%{search_query}%')) |
+        (PlacementDrive.job_title.ilike(f'%{search_query}%')) |
         (CompanyProfile.company_name.ilike(f'%{search_query}%'))
     ).all()
     
@@ -364,7 +410,7 @@ def global_search(current_user):
         CompanyProfile.company_name.ilike(f'%{query}%')
     ).all()
 
-    return render_template("admin_search_results.html", 
+    return render_template("admin_search.html", 
                            query=query, 
                            students=students, 
                            companies=companies)

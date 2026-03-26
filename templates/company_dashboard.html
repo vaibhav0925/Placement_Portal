@@ -16,27 +16,65 @@
             <a href="#" class="list-group-item list-group-item-action p-3 active" style="background-color: #6b0000; border: none;">My Drives</a>
             <a href="#" class="list-group-item list-group-item-action p-3">Applicants</a>
             <a href="#" class="list-group-item list-group-item-action p-3">Profile</a>
-            <a href="#" class="list-group-item list-group-item-action p-3 text-danger">Logout</a>
+            <a href="/logout" class="list-group-item list-group-item-action p-3 text-danger">Logout</a>
         </div>
     </div>
     <!-- Page Content -->
     <div class="container-fluid p-4 bg-light">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4>Active Placement Drives</h4>
-            <button class="btn text-white" style="background-color: #6b0000;">+ Create New Drive</button>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card border-0 shadow-sm p-3">
-                    <table class="table">
-                        <thead class="table-light"><tr><th>Drive Title</th><th>Applicants</th><th>Status</th><th>Actions</th></tr></thead>
-                        <tbody>
+    <!-- Header with Button Corrected -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Active Placement Drives</h4>
+        <a href="/create_drive" class="btn text-white px-4" style="background-color: #6b0000; border-radius: 5px;">
+            <i class="bi bi-plus-lg"></i> + Create New Drive
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light">
                             <tr>
-                                <td>Software Engineer - Dev</td>
-                                <td><span class="badge bg-primary">45 Applied</span></td>
-                                <td><span class="badge bg-success">Approved</span></td>
-                                <td><button class="btn btn-sm btn-outline-dark">View Applicants</button> <button class="btn btn-sm btn-outline-danger">Close</button></td>
+                                <th>Drive Title</th>
+                                <th>Location</th>
+                                <th>Applicants</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
                             </tr>
+                        </thead>
+                        <tbody>
+                            {% for drive in drives %}  <!-- Loop Starts Here -->
+                            <tr>
+                                <td class="fw-bold">{{ drive.job_title }}</td>
+                                <td>{{ drive.location }}</td>
+                                <td>
+                                    <span class="badge rounded-pill bg-primary">
+                                        {{ drive.applications|length }} Applied
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if drive.status == 'Approved' %}bg-success
+                                        {% elif drive.status == 'Closed' %}bg-danger
+                                        {% else %}bg-warning text-dark{% endif %}">
+                                        {{ drive.status }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    {% if drive.status != 'Closed' %}
+                                    <form action="/close_drive/{{ drive.drive_id }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                onclick="return confirm('Are you sure you want to close this drive?')">
+                                            Close
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted small">Closed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %} <!-- Loop Ends Here -->
                         </tbody>
                     </table>
                 </div>
@@ -44,6 +82,5 @@
         </div>
     </div>
 </div>
-
 </body>
 </html>

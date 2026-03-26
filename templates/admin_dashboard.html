@@ -27,12 +27,11 @@
         <div class="row mb-4">
             <div class="col-md-12">
                 <form action="/admin/global_search" method="GET" class="card shadow-sm border-0 p-3">
-                    <div class="input-group">
-                        <input type="text" name="q" class="form-control form-control-lg border-0 bg-light" 
-                            placeholder="Search students by name/roll no or companies by name..." required>
-                        <button class="btn btn-dark px-4" type="submit">
-                            <i class="bi bi-search"></i> Search Portal
-                        </button>
+                    <div class="input-group p-1" style="background-color: #6b0000; border-radius: 0.375rem;"> 
+                        <input type="text" name="q" class="form-control form-control-lg border-0" placeholder="Search students by name/roll no or companies by name..." required style="background-color: white;"> 
+                        <button class="btn px-4 text-white" type="submit" style="background-color: #6b0000; border: none;"> 
+                            <i class="bi bi-search"></i> Search Portal 
+                        </button> 
                     </div>
                 </form>
             </div>
@@ -46,15 +45,45 @@
         <div class="card shadow-sm border-0 p-4">
             <h5 class="mb-3">Pending Company Approvals</h5>
             <table class="table align-middle">
-                <thead><tr><th>Company</th><th>Email</th><th>Action</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {% for company in pending_companies %}
                     <tr>
                         <td>{{ company.company_name }}</td>
                         <td>{{ company.user.email }}</td>
                         <td>
-                            <a href="/admin/approve_company/{{ company.id }}" class="btn btn-sm btn-success">Approve</a>
-                            <a href="/admin/reject_company/{{ company.id }}" class="btn btn-sm btn-danger">Reject</a>
+                            <a href="/admin/approve_company/{{ company.company_id }}" class="btn btn-sm btn-success">Approve</a>
+                            <a href="/admin/reject_company/{{ company.company_id }}" class="btn btn-sm btn-danger">Reject</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card shadow-sm border-0 p-4 mt-4">
+            <h5 class="mb-3">Pending Placement Drives</h5>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in pending_drives %}
+                    <tr>
+                        <td>{{ drive.company.company_name }}</td>
+                        <td>{{ drive.job_title }}</td>
+                        <td>
+                            <a href="/admin/approve_drive/{{ drive.drive_id }}" class="btn btn-sm btn-success">Approve</a>
+                            <a href="/admin/reject_drive/{{ drive.drive_id }}" class="btn btn-sm btn-danger">Reject</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -63,6 +92,5 @@
         </div>
     </div>
 </div>
-
 </body>
 </html>
