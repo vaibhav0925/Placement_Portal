@@ -148,6 +148,45 @@ def student_dashboard(current_user):
     return render_template("student_dashboard.html", student=current_user, drives=available_drives, applications=my_applications)
 
 
+@app.route('/apply_drive/<int:drive_id>', methods=['POST'])
+@token_required
+def apply_drive(current_user, drive_id):
+    if current_user.role != 'student': return redirect('/')
+
+    student_id = current_user.student_profile.student_id
+
+    existing_app = Application.query.filter_by(
+        student_id=student_id, 
+        drive_id=drive_id
+    ).first()
+
+    if existing_app:
+        return redirect('/student_dashboard')
+
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    if drive.status != "Approved":
+        return "This drive is not available for applications."
+
+    # Check if the student has already applied
+    existing_application = Application.query.filter_by(
+        student_id=current_user.student_profile.student_id,
+        drive_id=drive_id
+    ).first()
+    if existing_application:
+        return "You have already applied for this drive."
+
+    new_application = Application(
+        student_id=student_id,
+        drive_id=drive_id,
+        status="Applied"
+    )
+
+    db.session.add(new_application)
+    db.session.commit()
+
+    return redirect('/student_dashboard')
+
+
 @app.route('/company_register', methods=['GET', 'POST'])
 def company_register():
     if request.method == 'POST':
