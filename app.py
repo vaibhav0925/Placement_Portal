@@ -244,6 +244,35 @@ def create_drive(current_user):
     return render_template("create_drive.html")
 
 
+@app.route('/company/applicants')
+@token_required
+def company_applicants(current_user):
+    if current_user.role != 'company': return redirect('/')
+
+    applicants = Application.query.join(PlacementDrive).filter(
+        PlacementDrive.company_id == current_user.company_profile.company_id
+    ).all()
+
+    return render_template("company_applicant.html", applicants=applicants)
+
+
+@app.route('/company/profile', methods=['GET', 'POST'])
+@token_required
+def company_profile(current_user):
+    if current_user.role != 'company': return redirect('/')
+
+    profile = current_user.company_profile
+
+    if request.method == 'POST':
+        profile.hr_contact = request.form.get('hr_contact')
+        profile.website = request.form.get('website')
+        profile.description = request.form.get('description')
+        db.session.commit()
+        return redirect('/company/profile')
+
+    return render_template("company_profile.html", company=current_user, profile=profile)
+
+
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':

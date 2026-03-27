@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="bg-white border-end" style="width: 250px; min-height: 100vh;">
+            <div class="sidebar-heading p-4 fs-4 fw-bold" style="color: #6b0000;">Recruiter Hub</div>
+            <div class="list-group list-group-flush">
+                <a href="/company_dashboard" class="list-group-item list-group-item-action p-3">My Drives</a>
+                <a href="/company/applicants" class="list-group-item list-group-item-action p-3">Applicants</a>
+                <a href="/company/profile" class="list-group-item list-group-item-action p-3 active" style="background-color: #6b0000; border: none;">Profile</a>
+                <a href="/logout" class="list-group-item list-group-item-action p-3 text-danger">Logout</a>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="container-fluid p-4 bg-light">
+            <div class="mb-4">
+                <h4 class="fw-bold">Company Profile</h4>
+                <p class="text-muted">Manage your public information and contact details.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm p-4">
+                        <form action="/company/profile" method="POST">
+                            <div class="row g-3">
+                                <!-- Read-Only Fields -->
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Company Name</label>
+                                    <input type="text" class="form-control bg-light" value="{{ profile.company_name }}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Verification Status</label>
+                                    <div>
+                                        <span class="badge {% if profile.approval_status == 'Approved' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ profile.approval_status }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <!-- Editable Fields -->
+                                <div class="col-md-6">
+                                    <label for="hr_contact" class="form-label fw-bold">HR Contact Name</label>
+                                    <input type="text" name="hr_contact" id="hr_contact" class="form-control" value="{{ profile.hr_contact or '' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="website" class="form-label fw-bold">Website URL</label>
+                                    <input type="url" name="website" id="website" class="form-control" value="{{ profile.website or '' }}" placeholder="https://example.com">
+                                </div>
+                                <div class="col-12">
+                                    <label for="description" class="form-label fw-bold">Company Description</label>
+                                    <textarea name="description" id="description" class="form-control" rows="5">{{ profile.description or '' }}</textarea>
+                                </div>
+
+                                <div class="col-12 mt-4 text-end">
+                                    <button type="submit" class="btn text-white px-5" style="background-color: #6b0000;">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Info Sidebar -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm p-4 text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-building fs-1" style="color: #6b0000;"></i>
+                        </div>
+                        <h5>{{ profile.company_name }}</h5>
+                        <p class="small text-muted">Member since {{ profile.created_at.strftime('%B %Y') }}</p>
+                        <hr>
+                        <div class="text-start">
+                            <p class="small mb-1"><strong>Email:</strong> {{ company.email }}</p>
+                            <p class="small mb-0"><strong>Role:</strong> Recruiter</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
